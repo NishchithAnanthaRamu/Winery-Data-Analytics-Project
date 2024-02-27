@@ -1,0 +1,830 @@
+```{r}
+#Loaded the required libraries
+library(caret)
+library(e1071)
+library(randomForest)
+library(gbm)
+library(ggplot2)
+
+
+#Filtered out red and white wines data separately using excel to create separate models
+
+data_train_red<-read.csv("WineData_red.csv", header = TRUE, stringsAsFactors = FALSE)
+data_test_red<- read.csv("WineHoldoutdata_red.csv")
+
+data_train_white<-read.csv("WineData_white.csv", header = TRUE, stringsAsFactors = FALSE)
+data_test_white<- read.csv("WineHoldoutdata_white.csv")
+
+sum(is.na(data_train_red))
+sum(is.na(data_train_white))
+
+summary(data_train_red)
+summary(data_train_white)
+
+#Visual representation of quality variable
+plot(table(data_train_red$quality), col = "red")
+plot(table(data_test_red$quality), col = "red")
+plot(table(data_train_white$quality), col = "grey")
+plot(table(data_test_white$quality), col = "grey")
+```
+
+
+```{r}
+#Based on Regression Model
+
+
+
+#SVM model for red wine data using radial kernel
+
+
+set.seed(123)
+svm_model_radial_red <- svm(quality~., data = data_train_red, kernel = "radial", cost = 10)
+svm_model_radial_red
+pred_svm_model_radial_red<-predict(svm_model_radial_red , newdata = data_test_red)
+testmse_svm_model_radial_red = mean((pred_svm_model_radial_red - data_test_red$quality)^2)
+testmse_svm_model_radial_red
+svm_tune_radial_red<- tune(svm, quality ~ ., data = data_train_red, kernel = "radial", ranges = list(cost = c(0.01, 1, 100), gamma = c( 0.5, 1, 2)))
+svm_tune_radial_red
+svm_model_best_radial_red<- svm(quality ~ ., data = data_train_red, kernel = "radial", cost = svm_tune_radial_red$best.parameters$cost, gamma = svm_tune_radial_red$best.parameters$gamma)
+svm_tune_radial_red$best.parameters
+svm_pred_radial_red<- predict(svm_model_radial_red, newdata = data_test_red)
+svm_testrmse_radial_red<- sqrt(mean((data_test_red$quality-svm_pred_radial_red)^2))
+svm_testrmse_radial_red
+```
+
+
+```{r}
+#SVM model for white wine data using radial kernel
+
+svm_model_radial_white <- svm(quality~., data = data_train_white, kernel = "radial", cost = 10)
+svm_model_radial_white
+pred_svm_model_radial_white<-predict(svm_model_radial_white , newdata = data_test_white)
+testmse_svm_model_radial_white = mean((pred_svm_model_radial_white - data_test_white$quality)^2)
+testmse_svm_model_radial_white
+svm_tune_radial_white<- tune(svm, quality ~ ., data = data_train_white, kernel = "radial", ranges = list(cost = c(0.01, 1, 100), gamma = c( 1,10, 100 )))
+svm_tune_radial_white
+svm_model_best_radial_white<- svm(quality ~ ., data = data_train_white, kernel = "radial", cost = svm_tune_radial_white$best.parameters$cost, gamma = svm_tune_radial_white$best.parameters$gamma)
+svm_tune_radial_white$best.parameters
+svm_pred_radial_white<- predict(svm_model_radial_white, newdata = data_test_white)
+svm_testrmse_radial_white<- sqrt(mean((data_test_white$quality-svm_pred_radial_white)^2))
+svm_testrmse_radial_white
+```
+
+```{r}
+
+#SVM model for red wine data using linear kernel
+
+
+svm_model_linear_red <- svm(quality~., data = data_train_red, kernel = "linear", cost = 10)
+svm_model_linear_red
+pred_svm_model_linear_red<-predict(svm_model_linear_red , newdata = data_test_red)
+testmse_svm_model_linear_red = mean((pred_svm_model_linear_red - data_test_red$quality)^2)
+testmse_svm_model_linear_red
+svm_tune_linear_red<- tune(svm, quality ~ ., data = data_train_red, kernel = "linear", ranges = list(cost = c(0.01, 1, 10)))
+svm_tune_linear_red
+svm_model_best_linear_red<- svm(quality ~ ., data = data_train_red, kernel = "linear", cost = svm_tune_linear_red$best.parameters$cost)
+svm_tune_linear_red$best.parameters
+svm_pred_linear_red<- predict(svm_model_linear_red, newdata = data_test_red)
+svm_testrmse_linear_red<- sqrt(mean((data_test_red$quality-svm_pred_linear_red)^2))
+svm_testrmse_linear_red
+```
+
+```{r}
+#SVM model for white wine data using linear kernel
+
+
+svm_model_linear_white <- svm(quality~., data = data_train_white, kernel = "linear", cost = 10)
+svm_model_linear_white
+pred_svm_model_linear_white<-predict(svm_model_linear_white , newdata = data_test_white)
+testmse_svm_model_linear_white = mean((pred_svm_model_linear_white - data_test_white$quality)^2)
+testmse_svm_model_linear_white
+svm_tune_linear_white<- tune(svm, quality ~ ., data = data_train_white, kernel = "linear", ranges = list(cost = c(0.01, 1, 10)))
+svm_tune_linear_white
+svm_model_best_linear_white<- svm(quality ~ ., data = data_train_white, kernel = "linear", cost = svm_tune_linear_white$best.parameters$cost)
+svm_tune_linear_white$best.parameters
+svm_pred_linear_white<- predict(svm_model_linear_white, newdata = data_test_white)
+svm_testrmse_linear_white<- sqrt(mean((data_test_white$quality-svm_pred_linear_white)^2))
+svm_testrmse_linear_white
+```
+
+```{r}
+#SVM model for red wine data using polynomial kernel
+
+
+svm_model_polynomial_red <- svm(quality~., data = data_train_red, kernel = "polynomial", cost = 10, degree = 2)
+svm_model_polynomial_red
+pred_svm_model_polynomial_red<-predict(svm_model_polynomial_red , newdata = data_test_red)
+testmse_svm_model_polynomial_red = mean((pred_svm_model_polynomial_red - data_test_red$quality)^2)
+testmse_svm_model_polynomial_red
+svm_tune_polynomial_red<- tune(svm, quality ~ ., data = data_train_red, kernel = "polynomial", ranges = list(cost = c(0.01, 1, 10), degree = c( 1, 2, 3 )))
+svm_tune_polynomial_red
+svm_model_best_polynomial_red<- svm(quality ~ ., data = data_train_red, kernel = "polynomial", cost = svm_tune_polynomial_red$best.parameters$cost, degree = svm_tune_polynomial_red$best.parameters$degree)
+svm_tune_polynomial_red$best.parameters
+svm_pred_polynomialr_red<- predict(svm_model_polynomial_red, newdata = data_test_red)
+svm_testrmse_polynomial_red<- sqrt(mean((data_test_red$quality-svm_pred_polynomialr_red)^2))
+svm_testrmse_polynomial_red
+```
+
+
+```{r}
+
+#SVM model for white wine data using polynomial kernel
+svm_model_polynomial_white <- svm(quality~., data = data_train_white, kernel = "polynomial", cost = 10, degree = 2)
+svm_model_polynomial_white
+pred_svm_model_polynomial_white<-predict(svm_model_polynomial_white , newdata = data_test_white)
+testmse_svm_model_polynomial_white = mean((pred_svm_model_polynomial_white - data_test_white$quality)^2)
+testmse_svm_model_polynomial_white
+svm_tune_polynomial_white<- tune(svm, quality ~ ., data = data_train_white, kernel = "polynomial", ranges = list(cost = c(0.01, 1, 10), degree = c( 1, 2, 3 )))
+svm_tune_polynomial_white
+svm_model_best_polynomial_white<- svm(quality ~ ., data = data_train_white, kernel = "polynomial", cost = svm_tune_polynomial_white$best.parameters$cost, degree = svm_tune_polynomial_white$best.parameters$degree)
+svm_tune_polynomial_white$best.parameters
+svm_pred_polynomial_white<- predict(svm_model_polynomial_white, newdata = data_test_white)
+svm_testrmse_polynomial_white<- sqrt(mean((data_test_white$quality-svm_pred_polynomial_white)^2))
+svm_testrmse_polynomial_white
+
+```
+
+```{r}
+#Random Forest Model through regression
+
+
+#Random Forest model for red wine data  
+
+
+set.seed(123)  
+rfmodel_red<-randomForest(quality~., data = data_train_red, ntree = 500, mtry = 5, importance = TRUE)
+rfmodel_red
+rfmodel_pred_red<-predict(rfmodel_red , newdata = data_test_red)
+
+rfmodel_tune_red<-tune(randomForest, quality~., data = data_train_red, importance = TRUE, ranges=list(ntree = c(100, 120, 140), mtry = c(4, 5, 6)))
+rfmodel_best_red<-rfmodel_tune_red$best.model
+rfmodel_best_red
+rfmodel_tune_pred_red<-predict(rfmodel_best_red,newdata = data_test_red)
+rfmodel_tune_testrmse_red<-sqrt(mean((rfmodel_tune_pred_red - data_test_red$quality)^2))
+rfmodel_tune_testrmse_red
+```
+
+```{r}
+
+#Random Forest model for white wine data
+
+rfmodel_white<-randomForest(quality~., data = data_train_white, ntree = 500, mtry = 5, importance = TRUE)
+rfmodel_white
+rfmodel_pred_white<-predict(rfmodel_white , newdata = data_test_white)
+
+rfmodel_tune_white<-tune(randomForest, quality~., data = data_train_white, importance = TRUE, ranges=list(ntree = c(100, 120, 140), mtry = c(4, 5, 6)))
+rfmodel_best_white<-rfmodel_tune_white$best.model
+rfmodel_best_white
+rfmodel_tune_pred_white<-predict(rfmodel_best_white, newdata = data_test_white)
+rfmodel_tune_testrmse_white<-sqrt(mean((rfmodel_tune_pred_white - data_test_white$quality)^2))
+rfmodel_tune_testrmse_white
+```
+
+```{r}
+
+#Boosting Model
+  
+
+set.seed(123)
+no_of_folds = 10
+
+#Boosting model for red wine data
+
+boosting_red<-gbm(quality~., data= data_train_red, distribution = "gaussian", n.trees= 500, interaction.depth = 5)
+boosting_red
+boosting_pred_red<-predict(boosting_red, newdata = data_test_red)
+
+boosting_tuninggrid_red<-expand.grid(interaction.depth=c(1, 3, 5), n.trees= (0:10)*30, shrinkage= c(0.01, 0.001), n.minobsinnode=10)
+tr_control_red<-trainControl(method = "cv", number = no_of_folds )
+boosting_tune_red<-train(quality ~., data = data_train_red, distribution = "gaussian", method = "gbm", trControl = tr_control_red, verbose = FALSE, tuneGrid = boosting_tuninggrid_red, metric = "RMSE")   
+boosting_tune_red
+boosting_tune_red$bestTune
+boosting_pred_red<-predict(boosting_tune_red, data_test_red, type = "raw")
+boosting_testrmse_red<-sqrt(mean((boosting_pred_red - data_test_red$quality)^2))
+boosting_testrmse_red
+```
+
+
+
+```{r}
+
+#Boosting model for white wine data
+
+boosting_white<-gbm(quality~., data= data_train_white, distribution = "gaussian", n.trees= 500, interaction.depth = 5)
+boosting_white
+boosting_pred_white<-predict(boosting_white, newdata = data_test_white)
+
+boosting_tuninggrid_white<-expand.grid(interaction.depth=c(1, 3, 5), n.trees= (0:10)*30, shrinkage= c(0.01, 0.001), n.minobsinnode=10)
+tr_control_white<-trainControl(method = "cv", number = no_of_folds )
+boosting_tune_white<-train(quality ~., data = data_train_white, distribution = "gaussian", method = "gbm", trControl = tr_control_white, verbose = FALSE, tuneGrid = boosting_tuninggrid_white, metric = "RMSE")
+boosting_tune_white
+boosting_tune_white$bestTune
+boosting_pred_white<-predict(boosting_tune_white, data_test_white, type = "raw")
+boosting_testrmse_white<-sqrt(mean((boosting_pred_red - data_test_red$quality)^2))
+boosting_testrmse_white
+```
+```{r}
+svm_misclassrate_radial_red=0.2327869
+svm_misclassrate_linear_red=0.242623
+svm_misclassrate_polynomial_red=0.2295082
+rfmodel_misclassrate_red=0.1803279
+boosting_misclassrate_red=0.2262295
+
+
+
+```
+```{r}
+#Results table for classification 
+
+result_df<-data.frame( Model = c ("SVM-Radial", "SVM-Linear", "SVM-Polynomial", "Randomforest", "Boosting"), 
+                        MisClassification = c(svm_misclassrate_radial_red, svm_misclassrate_linear_red, svm_misclassrate_polynomial_red, rfmodel_misclassrate_red, boosting_misclassrate_red) )
+result_df 
+```
+
+
+
+```{r}
+#Classification Method
+
+data_train_red$quality<-ifelse(data_train_red$quality > 5, "high", "low")
+data_test_red$quality<-ifelse(data_test_red$quality > 5, "high", "low")
+data_train_white$quality<-ifelse(data_train_white$quality > 5, "high", "low")
+data_test_white$quality<-ifelse(data_test_white$quality > 5, "high", "low")
+
+
+#Converting quality variables into factors for classification
+
+
+data_train_red$quality <- as.factor(data_train_red$quality)
+data_test_red$quality <- as.factor(data_test_red$quality)
+data_train_white$quality <- as.factor(data_train_white$quality)
+data_test_white$quality <- as.factor(data_test_white$quality)
+```
+
+```{r}
+#SVM model through classification method
+
+#SVM model for red wine data using radial kernel
+
+set.seed(123)
+svm_classification_radial_red<-svm(quality~.,data = data_train_red, kernel="radial", cost = 10)
+svm_classification_radial_red
+
+svm_classification_tune_radial_red<-tune(svm,quality~.,data = data_train_red, kernel="radial", ranges=list(cost = c(0.01, 1, 10),gamma = c(1, 2, 3)))
+svm_classification_best_radial_red<-svm_classification_tune_radial_red$best.model
+svm_classification_pred_radial_red<-predict(svm_classification_best_radial_red, data_test_red)
+svm_classification_table_radial_red<-table(svm_classification_pred_radial_red, data_test_red$quality)
+svm_classification_accuracy_radial_red<-sum(diag(svm_classification_table_radial_red))/sum(svm_classification_table_radial_red)
+svm_classification_accuracy_radial_red
+
+#Misclassification rate for SVM model using radial kernel for red wine data
+
+svm_misclassrate_radial_red<-sum(svm_classification_pred_radial_red != data_test_red$quality) / length(data_test_red$quality)
+svm_misclassrate_radial_red
+svm_mae_radial_red<-mean(abs(as.numeric(svm_classification_pred_radial_red) - as.numeric(data_test_red$quality)))
+svm_mae_radial_red
+
+```
+
+```{r}
+
+#SVM model for white wine data using radial kernel
+
+set.seed(123)
+svm_classification_radial_white<-svm(quality~.,data = data_train_white, kernel="radial", cost = 10)
+svm_classification_radial_white
+
+svm_classification_tune_radial_white<-tune(svm,quality~.,data = data_train_white, kernel="radial", ranges=list(cost=c(0.01, 1, 10),gamma=c(1, 2, 3)))
+svm_classification_best_radial_white<-svm_classification_tune_radial_white$best.model
+svm_classification_pred_radial_white<-predict(svm_classification_best_radial_white, data_test_white)
+svm_classification_table_radial_white<-table(svm_classification_pred_radial_white, data_test_white$quality)
+svm_classification_accuracy_radial_white<-sum(diag(svm_classification_table_radial_white))/sum(svm_classification_table_radial_white)
+svm_classification_accuracy_radial_white
+
+
+#Misclassification rate for SVM model using radial kernel for white wine data
+
+svm_misclassrate_radial_white<-sum(svm_classification_pred_radial_white != data_test_white$quality) / length(data_test_white$quality)
+svm_misclassrate_radial_white
+svm_mae_radial_white<-mean(abs(as.numeric(svm_classification_pred_radial_white) - as.numeric(data_test_white$quality)))
+svm_mae_radial_white
+
+```
+
+
+```{r}
+
+#SVM model for red wine data using linear kernel
+
+set.seed(123)
+svm_classification_linear_red<-svm(quality~.,data = data_train_red, kernel="linear", cost = 10)
+svm_classification_linear_red
+
+svm_classification_tune_linear_red<-tune(svm,quality~.,data = data_train_red, kernel="linear", ranges=list(cost=c(0.01, 1, 10)))
+svm_classification_best_linear_red<-svm_classification_tune_linear_red$best.model
+svm_classification_pred_linear_red<-predict(svm_classification_best_linear_red, data_test_red)
+svm_classification_table_linear_red<-table(svm_classification_pred_linear_red, data_test_red$quality)
+svm_classification_accuracy_linear_red<-sum(diag(svm_classification_table_linear_red))/sum(svm_classification_table_linear_red)
+svm_classification_accuracy_linear_red
+
+
+#Misclassification rate for SVM model using linear kernel for red wine data
+
+svm_misclassrate_linear_red<-sum(svm_classification_pred_linear_red != data_test_red$quality) / length(data_test_red$quality)
+svm_misclassrate_linear_red
+svm_mae_linear_red<-mean(abs(as.numeric(svm_classification_pred_linear_red) - as.numeric(data_test_red$quality)))
+svm_mae_linear_red
+
+```
+
+```{r}
+
+#SVM model for white wine data using linear kernel
+
+set.seed(123)
+svm_classification_linear_white<-svm(quality~.,data = data_train_white, kernel="linear", cost = 10)
+svm_classification_linear_white
+
+svm_classification_tune_linear_white<-tune(svm,quality~.,data = data_train_white, kernel="linear", ranges=list(cost=c(0.01, 1, 10)))
+svm_classification_best_linear_white<-svm_classification_tune_linear_white$best.model
+svm_classification_pred_linear_white<-predict(svm_classification_best_linear_white, data_test_white)
+svm_classification_table_linear_white<-table(svm_classification_pred_linear_white, data_test_white$quality)
+svm_classification_accuracy_linear_white<-sum(diag(svm_classification_table_linear_white))/sum(svm_classification_table_linear_white)
+svm_classification_accuracy_linear_white
+
+#Misclassification rate for SVM model using linear kernel for white wine data
+
+svm_misclassrate_linear_white<-sum(svm_classification_pred_linear_white != data_test_white$quality) / length(data_test_white$quality)
+svm_misclassrate_linear_white
+svm_mae_linear_white<-mean(abs(as.numeric(svm_classification_pred_linear_white) - as.numeric(data_test_white$quality)))
+svm_mae_linear_white
+```
+
+```{r}
+
+#SVM model for red wine data using polynomial kernel
+
+set.seed(123)
+svm_classification_polynomial_red<-svm(quality~.,data = data_train_red, kernel="polynomial", cost = 10, degree = 4)
+svm_classification_polynomial_red
+
+svm_classification_tune_polynomial_red<-tune(svm,quality~.,data = data_train_red, kernel="polynomial", ranges=list(cost=c(0.01, 1, 10),degree=c(3, 4, 5)))
+svm_classification_best_polynomial_red<-svm_classification_tune_polynomial_red$best.model
+svm_classification_pred_polynomial_red<-predict(svm_classification_best_polynomial_red, data_test_red)
+svm_classification_table_polynomial_red<-table(svm_classification_pred_polynomial_red, data_test_red$quality)
+svm_classification_accuracy_polynomial_red<-sum(diag(svm_classification_table_polynomial_red))/sum(svm_classification_table_polynomial_red)
+svm_classification_accuracy_polynomial_red
+
+
+#Misclassification rate for SVM model using polynomial kernel for red wine data
+
+svm_misclassrate_polynomial_red<-sum(svm_classification_pred_polynomial_red != data_test_red$quality) / length(data_test_red$quality)
+svm_misclassrate_polynomial_red
+svm_mae_polynomial_red<-mean(abs(as.numeric(svm_classification_pred_polynomial_red) - as.numeric(data_test_red$quality)))
+svm_mae_polynomial_red
+
+```
+
+```{r}
+
+#SVM model for white wine data using polynomial kernel
+
+set.seed(123)
+svm_classification_polynomial_white<-svm(quality~.,data = data_train_white, kernel="polynomial", cost = 10, degree = 4)
+svm_classification_polynomial_white
+
+svm_classification_tune_polynomial_white<-tune(svm,quality~.,data = data_train_white, kernel="polynomial", ranges=list(cost=c(0.01, 1, 10),degree=c(3, 4, 5)))
+svm_classification_best_polynomial_white<-svm_classification_tune_polynomial_white$best.model
+svm_classification_pred_polynomial_white<-predict(svm_classification_best_polynomial_white, data_test_white)
+svm_classification_table_polynomial_white<-table(svm_classification_pred_polynomial_white, data_test_white$quality)
+svm_classification_accuracy_polynomial_white<-sum(diag(svm_classification_table_polynomial_white))/sum(svm_classification_table_polynomial_white)
+svm_classification_accuracy_polynomial_white
+
+
+#Misclassification rate for SVM model using polynomial kernel for white wine data
+
+svm_misclassrate_polynomial_white<-sum(svm_classification_pred_polynomial_white != data_test_white$quality) / length(data_test_white$quality)
+svm_misclassrate_polynomial_white
+svm_mae_polynomial_white<-mean(abs(as.numeric(svm_classification_pred_polynomial_white) - as.numeric(data_test_white$quality)))
+svm_mae_polynomial_white
+```
+
+```{r}
+
+
+#Randomforest model for red wine data
+
+rfmodel_classification_red<-randomForest(quality ~., data = data_train_red, ntree = 500, mtry = 5, importance = TRUE)
+rfmodel_classification_red
+rfmodel_classification_pred_red<-predict(rfmodel_classification_red, data_test_red)
+table(rfmodel_classification_pred_red, data_test_red$quality)
+
+rfmodel_classification_tune_red<-tune(randomForest, quality ~., data = data_train_red, importance = TRUE, ranges=list(ntree = c( 100, 120, 140 ), mtry = c(4, 5, 6)))
+rfmodel_classification_best_red<-rfmodel_classification_tune_red$best.model
+rfmodel_classification_best_red
+rfmodel_classification_pred_red<-predict(rfmodel_classification_best_red, data_test_red)
+rfmodel_classification_table_red<-table(rfmodel_classification_pred_red, data_test_red$quality)
+rfmodel_classification_accuracy_red<-sum(diag(rfmodel_classification_table_red))/sum(rfmodel_classification_table_red)
+rfmodel_classification_accuracy_red
+
+#Misclassification rate for Randomforest model for red wine data
+
+rfmodel_misclassrate_red<-sum(rfmodel_classification_pred_red != data_test_red$quality) / length(data_test_red$quality)
+rfmodel_misclassrate_red
+rfmodel_mae_red<-mean(abs(as.numeric(rfmodel_classification_pred_red) - as.numeric(data_test_red$quality)))
+rfmodel_mae_red
+
+```
+
+```{r}
+#Randomforest model for white wine data
+
+rfmodel_classification_white<-randomForest(quality ~., data = data_train_white, ntree = 500, mtry = 5, importance = TRUE)
+rfmodel_classification_white
+rfmodel_classification_pred_white<-predict(rfmodel_classification_white, data_test_white)
+table(rfmodel_classification_pred_white, data_test_white$quality)
+
+rfmodel_classification_tune_white<-tune(randomForest, quality ~., data = data_train_white, importance = TRUE, ranges=list(ntree = c( 100, 120, 140 ), mtry = c(4, 5, 6)))
+rfmodel_classification_best_white<-rfmodel_classification_tune_white$best.model
+rfmodel_classification_best_white
+rfmodel_classification_pred_white<-predict(rfmodel_classification_best_white, data_test_white)
+rfmodel_classification_table_white<-table(rfmodel_classification_pred_white, data_test_white$quality)
+rfmodel_classification_accuracy_white<-sum(diag(rfmodel_classification_table_white))/sum(rfmodel_classification_table_white)
+rfmodel_classification_accuracy_white
+
+#Misclassification rate for Randomforest model using white wine data
+
+rfmodel_misclassrate_white<-sum(rfmodel_classification_pred_white != data_test_white$quality) / length(data_test_white$quality)
+rfmodel_misclassrate_white
+rfmodel_mae_white<-mean(abs(as.numeric(rfmodel_classification_pred_white) - as.numeric(data_test_white$quality)))
+rfmodel_mae_white
+
+```
+
+```{r}
+
+#Boosting model for red wine data
+
+set.seed(123)
+boosting_classification_tunegrid_red<-expand.grid(interaction.depth = c(1, 3, 5), n.trees = (0:10)*30, shrinkage = c(0.01, 0.001), n.minobsinnode = 10)
+boosting_classification_tunegrid_red
+boosting_traincontrol_red<-trainControl(method = "cv", number = 10)
+boosting_classification_red<-train(quality ~., data = data_train_red, distribution = "bernoulli", method = "gbm", trControl = boosting_traincontrol_red, verbose = FALSE, tuneGrid = boosting_classification_tunegrid_red, bag.fraction=0.75)   
+boosting_classification_red
+boosting_classification_red$bestTune
+boosting_classification_pred_red<-predict(boosting_classification_red, data_test_red, type = "raw")
+boosting_classification_table_red<-table(predict = boosting_classification_pred_red, truth = data_test_red$quality)
+boosting_classification_accuracy_red<-sum(diag(boosting_classification_table_red))/sum(boosting_classification_table_red)
+boosting_classification_accuracy_red
+
+
+#Misclassification rate for Boosting model using red wine data
+
+boosting_misclassrate_red<-sum(boosting_classification_pred_red != data_test_red$quality) / length(data_test_red$quality)
+boosting_misclassrate_red
+boosting_mae_red<-mean(abs(as.numeric(boosting_classification_pred_red) - as.numeric(data_test_red$quality)))
+boosting_mae_red
+```
+
+```{r}
+
+#Boosting model for white wine data
+
+set.seed(123)
+boosting_classification_tunegrid_white<-expand.grid(interaction.depth = c(1, 3, 5), n.trees = (0:10)*30, shrinkage = c(0.01, 0.001), n.minobsinnode=10)
+boosting_classification_tunegrid_white
+boosting_traincontrol_white<-trainControl(method = "cv", number = 10)
+boosting_classification_white<-train(quality ~., data = data_train_white, distribution = "bernoulli", method = "gbm", trControl = boosting_traincontrol_white, verbose=FALSE, tuneGrid = boosting_classification_tunegrid_white)   
+boosting_classification_white
+boosting_classification_white$bestTune
+boosting_classification_pred_white<-predict(boosting_classification_white, data_test_white, type= "raw")
+boosting_classification_table_white<-table(predict = boosting_classification_pred_white, truth = data_test_white$quality)
+boosting_classification_accuracy_white<-sum(diag(boosting_classification_table_white))/sum(boosting_classification_table_white)
+boosting_classification_accuracy_white
+
+
+#Misclassification rate for Boosting model using white wine data
+
+boosting_misclassrate_white<-sum(boosting_classification_pred_white != data_test_white$quality) / length(data_test_white$quality)
+boosting_misclassrate_white
+boosting_mae_white<-mean(abs(as.numeric(boosting_classification_pred_white) - as.numeric(data_test_white$quality)))
+boosting_mae_white
+```
+
+
+```{r}
+# Important Features for regression and classification model for red wine data
+
+
+#Important features for SVM Regression Model using linear kernel 
+
+
+svm_regression_impvar_linear_red<-abs(coef(svm_model_linear_red))
+svm_regression_impvar_df_red<-data.frame(variables = names(svm_regression_impvar_linear_red), importance = svm_regression_impvar_linear_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Linear Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+```{r}
+
+#Important features for SVM Regression Model using linear kernel
+
+svm_regression_impvar_linear_red<-abs(coef(svm_model_linear_red))
+svm_regression_impvar_df_linear_red<-data.frame(variables = names(svm_regression_impvar_linear_red), importance = svm_regression_impvar_linear_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_linear_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Linear Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+#Important features for SVM Regression Model using polynomial kernel 
+
+svm_regression_impvar_polynomial_red<-abs(coef(svm_model_polynomial_red))
+svm_regression_impvar_df_polynomial_red<-data.frame(variables = names(svm_regression_impvar_polynomial_red), importance = svm_regression_impvar_polynomial_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_polynomial_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Polynomial Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+
+```{r}
+#Important features for Randomforest Regression Model
+
+rfmodel_regression_impvar_red<-varImp(rfmodel_red)
+rfmodel_regression_impvar_red
+plot <- ggplot(rfmodel_regression_impvar_red, aes(x = variables, y = Importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "variables", y = "Importance", title = "Randomforest Regression Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```
+
+```{r}
+
+#Important features for Boosting Regression Model
+
+boosting_regression_impvar_red<-varImp(boosting_red)
+plot <- ggplot(rfmodel_regression_impvar_red, aes(x = variables, y = Importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "variables", y = "Importance", title = "Randomforest Regression Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+```{r}
+#Important features for SVM Classification Model using radial kernel 
+
+
+svm_classification_impvar_radial_red<-abs(coef(svm_classification_radial_red))
+svm_classification_impvar_df_radial_red<-data.frame(variables = names(svm_classification_impvar_radial_red), importance = svm_classification_impvar_radial_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_radial_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (Radial Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+
+```
+
+
+```{r}
+
+#Important features for SVM Classification Model using linear kernel 
+
+
+svm_classification_impvar_linear_red<-abs(coef(svm_classification_linear_red))
+svm_classification_impvar_df_linear_red<-data.frame(variables = names(svm_classification_impvar_linear_red), importance = svm_classification_impvar_linear_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_linear_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (Linear Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+
+```
+
+```{r}
+#Important features for SVM Classification Model using polynomial kernel 
+
+svm_classification_impvar_polynomial_red<-abs(coef(svm_classification_polynomial_red))
+svm_classification_impvar_df_polynomial_red<-data.frame(variables = names(svm_classification_impvar_linear_red), importance = svm_classification_impvar_polynomial_red, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_polynomial_red, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (polynomial Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```
+
+```{r}
+#Important features for Randomforest Classification Model
+
+rfmodel_classification_impvar_red<-varImp(rfmodel_classification_red)
+plot <- ggplot(rfmodel_classification_impvar_red, aes(x = variables, y = Importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "variables", y = "Importance", title = "Randomforest Classification Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+```{r}
+#Important features for Boosting Classification Model
+
+boosting_classification_impvar_red<-varImp(boosting_classification_red)
+plot <- ggplot(boosting_classification_impvar_red, aes(x = Reorder, y = Importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Reorder", y = "Importance", title = "Boosting Classification Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```  
+
+
+```{r}
+# Important Features for regression and classification model for white wine data
+
+
+#Important features for SVM Regression Model using radial kernel 
+
+
+svm_regression_impvar_radial_white<-abs(coef(svm_model_radial_white))
+svm_regression_impvar_df_radial_white<-data.frame(variables = names(svm_regression_impvar_radial_white), importance = svm_regression_impvar_radial_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_radial_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Radial Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```
+
+
+```{r}
+#Important features for SVM Regression Model using linear kernel
+
+svm_regression_impvar_linear_white<-abs(coef(svm_model_linear_white))
+svm_regression_impvar_df_linear_white<-data.frame(variables = names(svm_regression_impvar_linear_white), importance = svm_regression_impvar_linear_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_linear_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Linear Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+```{r}
+#Important features for SVM Regression Model using polynomial kernel 
+
+svm_regression_impvar_polynomial_white<-abs(coef(svm_model_polynomial_white))
+svm_regression_impvar_df_polynomial_white<-data.frame(variables = names(svm_regression_impvar_polynomial_white), importance = svm_regression_impvar_polynomial_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_regression_impvar_df_polynomial_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Regression Model Important Variables (Polynomial Kernel)") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+```{r}
+#Important features for Randomforest Regression Model
+
+rfmodel_regression_impvar_white<-varImp(rfmodel_white)
+plot <- ggplot(rfmodel_regression_impvar_white, aes(x = variables, y = Importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "variables", y = "Importance", title = "Randomforest Regression Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+```{r}
+#Important features for Boosting Regression Model
+
+boosting_regression_impvar_white<-varImp(boosting_white)
+plot <- ggplot(boosting_regression_impvar_white, aes(x = Reorder, y = Importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "Reorder", y = "Importance", title = "Boosting Regression Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```
+
+```{r}
+#Important features for SVM Classification Model using radial kernel 
+
+
+svm_classification_impvar_radial_white<-abs(coef(svm_classification_radial_white))
+svm_classification_impvar_df_radial_red<-data.frame(variables = names(svm_classification_impvar_radial_red), importance = svm_classification_impvar_radial_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_radial_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (Radial Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+
+```
+
+```{r}
+#Important features for SVM Classification Model using linear kernel 
+
+
+svm_classification_impvar_linear_white<-abs(coef(svm_classification_linear_white))
+svm_classification_impvar_df_linear_white<-data.frame(variables = names(svm_classification_impvar_linear_white), importance = svm_classification_impvar_linear_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_linear_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (Linear Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+```{r}
+#Important features for SVM Classification Model using polynomial kernel 
+
+svm_classification_impvar_polynomial_white<-abs(coef(svm_classification_polynomial_white))
+svm_classification_impvar_df_polynomial_white<-data.frame(variables = names(svm_classification_impvar_linear_white), importance = svm_classification_impvar_polynomial_white, stringsAsFactors = FALSE)
+
+plot <- ggplot(svm_classification_impvar_df_polynomial_white, aes(x = variables, y = importance)) +
+  geom_bar(stat = "identity", fill = "red") +
+  labs(x = "Variables", y = "Importance", title = "SVM Classification Model Important Variables (polynomial Kernel)") + theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+
+```
+
+```{r}
+#Important features for Randomforest Classification Model
+
+rfmodel_classification_impvar_white<-varImp(rfmodel_classification_white)
+plot <- ggplot(rfmodel_classification_impvar_white, aes(x = variables, y = Importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "variables", y = "Importance", title = "Randomforest Classification Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+```{r}
+#Important features for Boosting Classification Model
+
+boosting_classification_impvar_white<-varImp(boosting_classification_white)
+plot <- ggplot(boosting_classification_impvar_white, aes(x = Reorder, y = Importance)) +
+  geom_bar(stat = "identity", fill = "grey") +
+  labs(x = "Reorder", y = "Importance", title = "Boosting Classification Model Important Variables") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot)
+```
+
+
+
+
+
+
+
+
+
+
+
+
